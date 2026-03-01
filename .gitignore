@@ -1,0 +1,99 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate.log
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# The .vscode folder contains launch configurations and scripts you may want to
+# customize. In general, it should not be checked into source control, but so
+# far it is considered best practice to check it in.
+# .vscode/
+
+# Flutter/Dart-related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+__metadata
+build/
+node_modules/
+package-lock.json
+
+# Android-related
+**/android/**/generated/
+**/android/gen/
+**/android/gradlew
+**/android/gradlew.bat
+**/android/local.properties
+**/android/key.properties
+**/android/ant.properties
+**/android/build/
+**/android/.gradle/
+**/android/captures/
+**/android/*.iml
+**/android/*.ipr
+**/android/*.iws
+.gradle/
+captures/
+*.keystore
+*.jks
+
+# iOS-related
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets.zip
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.[h|m]
+**/ios/Pods/
+**/ios/.generated/
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+!default.mode1v3
+!default.mode2v3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+DerivedData/
+*.hmap
+*.ipa
+*.ptv
+*.tcc
+.ipa-built-products/
+
+# Symbols for crash reporting
+*.pdb
+
+# Executables
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Web related
+.web_assets/
+
+# Environment variables
+.env*
