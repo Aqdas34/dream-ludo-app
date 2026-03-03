@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:dream_ludo/core/services/storage_service.dart';
-import 'package:dream_ludo/core/services/websocket_service.dart';
+import 'package:dream_ludo/core/services/socket_service.dart';
 import 'package:dream_ludo/features/match/data/models/match_model.dart';
 import 'package:dream_ludo/features/match/domain/usecases/get_matches_usecase.dart';
 
@@ -78,17 +78,17 @@ class MatchError extends MatchState {
 class MatchBloc extends Bloc<MatchEvent, MatchState> {
   final GetMatchesUseCase _getMatchesUseCase;
   final StorageService _storage;
-  final WebSocketService _wsService;
+  final SocketService _socketService;
 
   MatchTab _currentTab = MatchTab.upcoming;
 
   MatchBloc({
     required GetMatchesUseCase getMatchesUseCase,
     required StorageService storage,
-    required WebSocketService wsService,
+    required SocketService socketService,
   })  : _getMatchesUseCase = getMatchesUseCase,
         _storage = storage,
-        _wsService = wsService,
+        _socketService = socketService,
         super(MatchInitial()) {
     on<LoadMatches>(_onLoadMatches);
     on<RefreshMatches>(_onLoadMatches);
@@ -130,17 +130,19 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     }
   }
 
-  // Subscribe to WebSocket for live match updates
+  // Subscribe to Socket.IO for live match updates
   void subscribeToMatchUpdates() {
-    _wsService.subscribe(
-      destination: '/topic/matches',
-      onMessage: (message) {
+    _socketService.connect().then((_) {
+      _socketService.on('matchesUpdate', (message) {
         try {
-          final json = jsonDecode(message) as Map<String, dynamic>;
-          final updatedMatch = MatchModel.fromJson(json);
+          // Socket.IO often sends direct objects, not JSON strings
+          final json = message is String ? jsonDecode(message) : message;
+          final updatedMatch = MatchModel.fromJson(json as Map<String, dynamic>);
           add(MatchUpdatedFromWS(updatedMatch));
         } catch (_) {}
-      },
-    );
+      });
+    }).catchError((e) {
+      print('❌ MatchBloc: Socket connection failed: $e');
+    });
   }
 }

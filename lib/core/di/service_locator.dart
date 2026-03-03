@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dream_ludo/core/network/dio_client.dart';
 import 'package:dream_ludo/core/services/storage_service.dart';
 import 'package:dream_ludo/core/services/websocket_service.dart';
+import 'package:dream_ludo/core/services/socket_service.dart';
 import 'package:dream_ludo/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:dream_ludo/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:dream_ludo/features/auth/domain/repositories/auth_repository.dart';
@@ -25,6 +26,7 @@ import 'package:dream_ludo/features/splash/data/repositories/app_repository_impl
 import 'package:dream_ludo/features/splash/domain/repositories/app_repository.dart';
 import 'package:dream_ludo/features/splash/domain/usecases/get_app_details_usecase.dart';
 import 'package:dream_ludo/features/splash/presentation/bloc/splash_bloc.dart';
+import 'package:dream_ludo/features/rewards/presentation/bloc/rewards_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -97,7 +99,13 @@ Future<void> setupServiceLocator() async {
     () => MatchBloc(
       getMatchesUseCase: sl<GetMatchesUseCase>(),
       storage: sl<StorageService>(),
-      wsService: sl<WebSocketService>(),
+      socketService: sl<SocketService>(),
     ),
   );
+
+  // ── Rewards Feature ───────────────────────────────────────────
+  sl.registerFactory(() => RewardsBloc());
+
+  // ── Game / Sockets ─────────────────────────────────────────────
+  sl.registerSingleton<SocketService>(SocketService(sl<StorageService>()));
 }

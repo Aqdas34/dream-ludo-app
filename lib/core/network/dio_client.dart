@@ -157,7 +157,9 @@ class _LoggingInterceptor extends Interceptor {
 
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
-    _logger.d('← ${response.statusCode} ${response.requestOptions.path}');
+    final path = response.requestOptions.path;
+    final status = response.statusCode;
+    _logger.d('← $status $path');
     super.onResponse(response, handler);
   }
 

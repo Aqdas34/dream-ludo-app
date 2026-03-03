@@ -22,7 +22,7 @@ class Env {
       case Flavor.prod:
         return 'https://slateblue-reindeer-226763.hostingersite.com/';
       case Flavor.dev:
-        return 'https://slateblue-reindeer-226763.hostingersite.com/'; // swap for dev server
+        return 'http://192.168.211.79:3005/'; // local Node.js backend
     }
   }
 
@@ -32,7 +32,7 @@ class Env {
       case Flavor.prod:
         return 'wss://slateblue-reindeer-226763.hostingersite.com/ws';
       case Flavor.dev:
-        return 'ws://10.0.2.2:8080/ws'; // Android emulator localhost
+        return 'ws://192.168.211.79:3005'; // local Node.js backend
     }
   }
 

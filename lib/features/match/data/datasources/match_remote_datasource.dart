@@ -36,22 +36,22 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     // Already a list
     if (responseData is List) {
       return responseData
-          .whereType<Map<String, dynamic>>()
-          .map(MatchModel.fromJson)
+          .where((e) => e is Map)
+          .map((e) => MatchModel.fromJson(Map<String, dynamic>.from(e as Map)))
           .toList();
     }
 
     // Map with 'result' key
-    if (responseData is Map<String, dynamic>) {
+    if (responseData is Map) {
       final raw = responseData['result'];
       if (raw is List) {
         return raw
-            .whereType<Map<String, dynamic>>()
-            .map(MatchModel.fromJson)
+            .where((e) => e is Map)
+            .map((e) => MatchModel.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
       }
-      if (raw is Map<String, dynamic>) {
-        return [MatchModel.fromJson(raw)];
+      if (raw is Map) {
+        return [MatchModel.fromJson(Map<String, dynamic>.from(raw))];
       }
     }
 
@@ -59,16 +59,19 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   }
 
   MatchModel _parseSingle(dynamic responseData) {
-    if (responseData is Map<String, dynamic>) {
+    if (responseData is Map) {
       final raw = responseData['result'];
       if (raw is List && raw.isNotEmpty) {
-        return MatchModel.fromJson(raw[0] as Map<String, dynamic>);
+        final first = raw[0];
+        if (first is Map) {
+          return MatchModel.fromJson(Map<String, dynamic>.from(first));
+        }
       }
-      if (raw is Map<String, dynamic>) {
-        return MatchModel.fromJson(raw);
+      if (raw is Map) {
+        return MatchModel.fromJson(Map<String, dynamic>.from(raw));
       }
       // Maybe responseData itself is the match
-      return MatchModel.fromJson(responseData);
+      return MatchModel.fromJson(Map<String, dynamic>.from(responseData));
     }
     throw Exception('Unexpected response format');
   }

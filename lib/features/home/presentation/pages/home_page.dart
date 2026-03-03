@@ -11,6 +11,9 @@ import 'package:dream_ludo/core/theme/app_theme.dart';
 import 'package:dream_ludo/features/match/domain/usecases/get_matches_usecase.dart';
 import 'package:dream_ludo/features/match/presentation/bloc/match_bloc.dart';
 import 'package:dream_ludo/features/match/presentation/widgets/matches_tab_view.dart';
+import 'package:dream_ludo/features/rewards/presentation/pages/rewards_page.dart';
+import 'package:dream_ludo/features/rewards/presentation/bloc/rewards_bloc.dart';
+import 'package:dream_ludo/features/rewards/presentation/bloc/rewards_event.dart';
 import 'package:dream_ludo/core/services/storage_service.dart';
 
 import 'package:url_launcher/url_launcher.dart';
@@ -35,18 +38,24 @@ class _HomePageState extends State<HomePage> {
         if (didPop) return;
         _handleBackPress();
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: _buildAppBar(),
-        body: IndexedStack(
-          index: _bottomNavIndex,
-          children: const [
-            _MatchesTab(),
-            _HowToPlayTab(),
-            _SettingsTab(),
-          ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (_) => sl<RewardsBloc>()..add(LoadRewards())),
+        ],
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: _buildAppBar(),
+          body: IndexedStack(
+            index: _bottomNavIndex,
+            children: const [
+              _MatchesTab(),
+              _GameTab(),
+              RewardsPage(),
+              _SettingsTab(),
+            ],
+          ),
+          bottomNavigationBar: _buildBottomNav(),
         ),
-        bottomNavigationBar: _buildBottomNav(),
       ),
     );
   }
@@ -122,19 +131,24 @@ class _HomePageState extends State<HomePage> {
       onTap: (i) => setState(() => _bottomNavIndex = i),
       items: const [
         BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home),
+          label: 'Home',
+        ),
+        BottomNavigationBarItem(
           icon: Icon(Icons.sports_esports_outlined),
           activeIcon: Icon(Icons.sports_esports),
           label: 'Game',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.help_outline_rounded),
-          activeIcon: Icon(Icons.help_rounded),
-          label: 'How To Play?',
+          icon: Icon(Icons.star_outline_rounded),
+          activeIcon: Icon(Icons.star_rounded),
+          label: 'Rewards',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.more_horiz_rounded),
-          activeIcon: Icon(Icons.more_horiz_rounded),
-          label: 'More',
+          icon: Icon(Icons.person_outline_rounded),
+          activeIcon: Icon(Icons.person),
+          label: 'Profile',
         ),
       ],
     );
@@ -174,36 +188,103 @@ class _MatchesTab extends StatelessWidget {
   }
 }
 
-// ── Tab: How To Play? (Webview/URL) ───────────────────────────────
+// ── Tab: Game Selection ──────────────────────────────────────────
 
-class _HowToPlayTab extends StatelessWidget {
-  const _HowToPlayTab();
+class _GameTab extends StatelessWidget {
+  const _GameTab();
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.help_center_outlined, size: 80, color: AppColors.primary),
-          const SizedBox(height: 16),
-          Text('How To Play?', style: AppTextStyles.heading2),
-          const SizedBox(height: 12),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              'Learn how to play DreamLudo and win big!',
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.sports_esports, size: 100, color: AppColors.primary),
+            const SizedBox(height: 20),
+            Text('Quick Game', style: AppTextStyles.heading2),
+            const SizedBox(height: 12),
+            const Text(
+              'Challenge another player in a real-time Ludo match.',
               textAlign: TextAlign.center,
               style: TextStyle(color: AppColors.textSecondary),
             ),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () => launchUrl(Uri.parse(AppConstants.howToPlay)),
-            style: ElevatedButton.styleFrom(minimumSize: const Size(200, 50)),
-            child: const Text('Open Knowledge Base'),
-          ),
-        ],
+            const SizedBox(height: 48),
+            
+            // Premium Start Button
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: const LinearGradient(
+                  colors: [AppColors.primary, Color(0xFFFF5252)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.4),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () => context.push('/game/quick'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  minimumSize: const Size(0, 80),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                     Icon(Icons.play_circle_filled_rounded, size: 40, color: Colors.white),
+                     SizedBox(width: 12),
+                     Text(
+                      'START 2-PLAYER GAME',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2),
+                     ),
+                  ],
+                ),
+              ),
+            ),
+            
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGameCard(BuildContext context, String title, String subtitle, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: AppColors.primary, size: 32),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
+          ],
+        ),
       ),
     );
   }

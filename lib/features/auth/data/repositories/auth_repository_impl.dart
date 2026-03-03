@@ -42,6 +42,12 @@ class AuthRepositoryImpl implements AuthRepository {
           (user.success == null && (user.id != null || user.username != null));
 
       if (isSuccess) {
+        // Save the JWT token if available in the response
+        if (user.token != null && user.token!.isNotEmpty) {
+          await _storage.saveToken(user.token!);
+          print('🔑 TOKEN SAVED: ${user.token}');
+        }
+
         await _storage.saveUserProfile(
           userId:      user.id ?? '',
           fullName:    user.fullName ?? '',
@@ -94,7 +100,24 @@ class AuthRepositoryImpl implements AuthRepository {
         deviceId: deviceId,
         referCode: referCode,
       );
-      if (user.success == 1) return Right(user);
+      if (user.success == 1) {
+        // Save token and profile to auto-login after register
+        if (user.token != null && user.token!.isNotEmpty) {
+           await _storage.saveToken(user.token!);
+        }
+        await _storage.saveUserProfile(
+          userId: user.id ?? '',
+          fullName: user.fullName ?? '',
+          profilePhoto: user.profileImg ?? '',
+          username: user.username ?? '',
+          email: user.email ?? '',
+          countryCode: user.countryCode ?? '',
+          mobile: user.mobile ?? '',
+          whatsapp: user.whatsappNo ?? '',
+          password: password,
+        );
+        return Right(user);
+      }
       return Left(AuthFailure(user.msg ?? 'Registration failed'));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));

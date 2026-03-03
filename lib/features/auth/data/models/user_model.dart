@@ -41,6 +41,7 @@ class UserModel extends Equatable {
   final int? isBlock;
   final String? msg;
   final int? success;
+  final String? token;
 
   const UserModel({
     this.id,
@@ -59,6 +60,7 @@ class UserModel extends Equatable {
     this.isBlock,
     this.msg,
     this.success,
+    this.token,
   });
 
   double get totalBalance =>
@@ -85,6 +87,7 @@ class UserModel extends Equatable {
       isBlock:     _toInt(json['is_block']),
       msg:         _str(json['msg']),
       success:     _toInt(json['success']),
+      token:       _str(json['token']),
     );
   }
 
@@ -105,10 +108,11 @@ class UserModel extends Equatable {
     'is_block':    isBlock,
     'msg':         msg,
     'success':     success,
+    'token':       token,
   };
 
   @override
-  List<Object?> get props => [id, email, username];
+  List<Object?> get props => [id, email, username, token];
 }
 
 class UserResponse {
@@ -120,33 +124,33 @@ class UserResponse {
     if (json is List) {
       return UserResponse(
         result: json
-            .whereType<Map<String, dynamic>>()
-            .map(UserModel.fromJson)
+            .where((e) => e is Map)
+            .map((e) => UserModel.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList(),
       );
     }
 
-    if (json is Map<String, dynamic>) {
+    if (json is Map) {
       final raw = json['result'];
 
       // Shape 2: { "result": [ {...} ] }
       if (raw is List) {
         return UserResponse(
           result: raw
-              .whereType<Map<String, dynamic>>()
-              .map(UserModel.fromJson)
+              .where((e) => e is Map)
+              .map((e) => UserModel.fromJson(Map<String, dynamic>.from(e as Map)))
               .toList(),
         );
       }
 
       // Shape 3: { "result": { ... } }  (single object)
-      if (raw is Map<String, dynamic>) {
-        return UserResponse(result: [UserModel.fromJson(raw)]);
+      if (raw is Map) {
+        return UserResponse(result: [UserModel.fromJson(Map<String, dynamic>.from(raw))]);
       }
 
       // Shape 4: the map itself IS the user object
       if (json.containsKey('id') || json.containsKey('username')) {
-        return UserResponse(result: [UserModel.fromJson(json)]);
+        return UserResponse(result: [UserModel.fromJson(Map<String, dynamic>.from(json))]);
       }
     }
 
