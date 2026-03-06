@@ -15,6 +15,8 @@ import 'package:dream_ludo/features/auth/data/repositories/auth_repository_impl.
 import 'package:dream_ludo/features/auth/domain/repositories/auth_repository.dart';
 import 'package:dream_ludo/features/auth/domain/usecases/login_usecase.dart';
 import 'package:dream_ludo/features/auth/domain/usecases/register_usecase.dart';
+import 'package:dream_ludo/features/auth/domain/usecases/get_profile_usecase.dart';
+import 'package:dream_ludo/features/auth/domain/usecases/update_profile_usecase.dart';
 import 'package:dream_ludo/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:dream_ludo/features/match/data/datasources/match_remote_datasource.dart';
 import 'package:dream_ludo/features/match/data/repositories/match_repository_impl.dart';
@@ -27,6 +29,7 @@ import 'package:dream_ludo/features/splash/domain/repositories/app_repository.da
 import 'package:dream_ludo/features/splash/domain/usecases/get_app_details_usecase.dart';
 import 'package:dream_ludo/features/splash/presentation/bloc/splash_bloc.dart';
 import 'package:dream_ludo/features/rewards/presentation/bloc/rewards_bloc.dart';
+import 'package:dream_ludo/features/online_game/presentation/bloc/online_ludo_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -62,10 +65,14 @@ Future<void> setupServiceLocator() async {
   );
   sl.registerLazySingleton(() => LoginUseCase(sl<AuthRepository>()));
   sl.registerLazySingleton(() => RegisterUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => GetProfileUseCase(sl<AuthRepository>()));
+  sl.registerLazySingleton(() => UpdateProfileUseCase(sl<AuthRepository>()));
   sl.registerFactory(
     () => AuthBloc(
       loginUseCase: sl<LoginUseCase>(),
       registerUseCase: sl<RegisterUseCase>(),
+      getProfileUseCase: sl<GetProfileUseCase>(),
+      updateProfileUseCase: sl<UpdateProfileUseCase>(),
       storage: sl<StorageService>(),
     ),
   );
@@ -108,4 +115,5 @@ Future<void> setupServiceLocator() async {
 
   // ── Game / Sockets ─────────────────────────────────────────────
   sl.registerSingleton<SocketService>(SocketService(sl<StorageService>()));
+  sl.registerFactory(() => OnlineLudoBloc(sl<SocketService>()));
 }

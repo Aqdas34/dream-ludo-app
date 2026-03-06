@@ -3,8 +3,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:dream_ludo/core/error/failures.dart';
 import 'package:dream_ludo/features/match/data/models/match_model.dart';
+import 'package:dream_ludo/features/match/data/models/game_history_model.dart';
 
 abstract class MatchRepository {
+  Future<Either<Failure, List<MatchModel>>> getHistory(String userId);
   Future<Either<Failure, List<MatchModel>>> getUpcoming(String userId);
   Future<Either<Failure, List<MatchModel>>> getOngoing(String userId);
   Future<Either<Failure, List<MatchModel>>> getCompleted(String userId);

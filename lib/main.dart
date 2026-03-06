@@ -10,6 +10,10 @@ import 'package:dream_ludo/core/di/service_locator.dart';
 import 'package:dream_ludo/core/router/app_router.dart';
 import 'package:dream_ludo/core/services/storage_service.dart';
 import 'package:dream_ludo/core/theme/app_theme.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:dream_ludo/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:dream_ludo/features/splash/presentation/bloc/splash_bloc.dart';
+import 'package:dream_ludo/features/match/presentation/bloc/match_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,8 +32,7 @@ void main() async {
     ),
   );
 
-  // Initialize Firebase
-  // await Firebase.initializeApp();
+  // Initialize Firebase (Removed)
 
   // Setup dependency injection
   await setupServiceLocator();
@@ -55,11 +58,18 @@ class _DreamLudoAppState extends State<DreamLudoApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'DreamLudo',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.dark,
-      routerConfig: _router,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => sl<AuthBloc>()),
+        BlocProvider(create: (_) => sl<SplashBloc>()),
+        BlocProvider(create: (_) => sl<MatchBloc>()),
+      ],
+      child: MaterialApp.router(
+        title: 'DreamLudo',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.dark,
+        routerConfig: _router,
+      ),
     );
   }
 }

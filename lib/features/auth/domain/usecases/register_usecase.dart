@@ -22,6 +22,7 @@ class RegisterUseCase {
       password: params.password,
       fcmToken: params.fcmToken,
       deviceId: params.deviceId,
+      gender: params.gender,
       referCode: params.referCode,
     );
   }
@@ -36,6 +37,7 @@ class RegisterParams extends Equatable {
   final String password;
   final String fcmToken;
   final String deviceId;
+  final String gender;
   final String? referCode;
 
   const RegisterParams({
@@ -47,9 +49,10 @@ class RegisterParams extends Equatable {
     required this.password,
     required this.fcmToken,
     required this.deviceId,
+    required this.gender,
     this.referCode,
   });
 
   @override
-  List<Object?> get props => [email, mobile];
+  List<Object?> get props => [email, mobile, gender];
 }

@@ -27,28 +27,31 @@ class LudoPieceWidget extends StatelessWidget {
     return AnimatedPositioned(
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
-      left: offset.dy * cellSize, // Row/Col swap for Dy/Dx in Flutter
+      left: offset.dy * cellSize,
       top: offset.dx * cellSize,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: isSelectable ? onTap : null,
         child: Container(
           width: cellSize,
           height: cellSize,
-          padding: EdgeInsets.all(cellSize * 0.15),
+          padding: const EdgeInsets.all(2), // Smaller padding = larger piece
           child: Container(
             decoration: BoxDecoration(
               color: _getColor(),
               shape: BoxShape.circle,
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
-                 if (isSelectable)
-                   BoxShadow(color: _getColor().withOpacity(0.5), blurRadius: 8, spreadRadius: 4),
-                 BoxShadow(color: Colors.black26, offset: const Offset(2, 2), blurRadius: 2),
+                 if (isSelectable) ...[
+                   BoxShadow(color: _getColor().withOpacity(0.8), blurRadius: 10, spreadRadius: 4),
+                   BoxShadow(color: Colors.white.withOpacity(0.4), blurRadius: 4, spreadRadius: 1),
+                 ],
+                 BoxShadow(color: Colors.black26, offset: const Offset(1, 1), blurRadius: 2),
               ],
             ),
             child: Center(
               child: isSelectable 
-                ? const Icon(Icons.touch_app_rounded, color: Colors.white, size: 10) 
+                ? const Icon(Icons.touch_app_rounded, color: Colors.white, size: 16) 
                 : null,
             ),
           ),

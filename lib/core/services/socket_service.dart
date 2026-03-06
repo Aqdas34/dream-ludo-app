@@ -75,11 +75,15 @@ class SocketService {
       print('⚠️ Socket not initialized! Call connect() first.');
       return;
     }
-    _socket!.on(event, (data) => callback(data));
+    _socket!.on(event, callback);
   }
 
-  void off(String event) {
-    _socket?.off(event);
+  void off(String event, [Function(dynamic)? callback]) {
+    if (callback != null) {
+      _socket?.off(event, callback);
+    } else {
+      _socket?.off(event);
+    }
   }
 
   void dispose() {

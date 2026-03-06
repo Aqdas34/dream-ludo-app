@@ -18,6 +18,9 @@ import 'package:dream_ludo/core/services/storage_service.dart';
 
 import 'package:url_launcher/url_launcher.dart';
 import 'package:dream_ludo/core/constants/app_constants.dart';
+import 'package:dream_ludo/features/rooms/presentation/widgets/create_room_bottom_sheet.dart';
+import 'package:dream_ludo/features/rooms/presentation/widgets/join_room_dialog.dart';
+import 'package:dream_ludo/features/rooms/data/services/room_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -181,7 +184,7 @@ class _MatchesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => sl<MatchBloc>()
-        ..add(const LoadMatches(MatchTab.upcoming))
+        ..add(const LoadMatches(MatchTab.history))
         ..subscribeToMatchUpdates(),
       child: const MatchesTabView(),
     );
@@ -195,97 +198,193 @@ class _GameTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.sports_esports, size: 100, color: AppColors.primary),
-            const SizedBox(height: 20),
-            Text('Quick Game', style: AppTextStyles.heading2),
-            const SizedBox(height: 12),
-            const Text(
-              'Challenge another player in a real-time Ludo match.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.textSecondary),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeroSection(),
+          const SizedBox(height: 40),
+          const Text(
+            'SELECT MODE',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
             ),
-            const SizedBox(height: 48),
-            
-            // Premium Start Button
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                gradient: const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFFFF5252)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          ),
+          const SizedBox(height: 20),
+          _buildGameModeCard(
+            context,
+            title: 'Pass & Play',
+            subtitle: 'Local 2-Player classic match',
+            icon: Icons.people_rounded,
+            color: Colors.orange,
+            onTap: () => context.push('/game/quick'),
+          ),
+          const SizedBox(height: 16),
+          _buildGameModeCard(
+            context,
+            title: 'Create Private Room',
+            subtitle: 'Play with friends online',
+            icon: Icons.add_box_rounded,
+            color: AppColors.primary,
+            onTap: () => _showCreateRoom(context),
+          ),
+          const SizedBox(height: 16),
+          _buildGameModeCard(
+            context,
+            title: 'Join with Code',
+            subtitle: 'Enter a code to join a match',
+            icon: Icons.vpn_key_rounded,
+            color: Colors.blue,
+            onTap: () => _showJoinRoom(context),
+          ),
+          const SizedBox(height: 16),
+          _buildGameModeCard(
+            context,
+            title: 'Public Online Games',
+            subtitle: 'Find and join open rooms now',
+            icon: Icons.public_rounded,
+            color: Colors.green,
+            onTap: () => context.push(AppRoutes.publicLobby),
+          ),
+          const SizedBox(height: 40),
+          _buildOnlineStats(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.sports_esports, size: 80, color: AppColors.primary),
+          const SizedBox(height: 24),
+          const Text(
+            'BATTLE LOUNGE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ready for a professional Ludo match?',
+            style: TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameModeCard(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.1), width: 1),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.4),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+                child: Icon(icon, color: color, size: 32),
               ),
-              child: ElevatedButton(
-                onPressed: () => context.push('/game/quick'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  minimumSize: const Size(0, 80),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                     Icon(Icons.play_circle_filled_rounded, size: 40, color: Colors.white),
-                     SizedBox(width: 12),
-                     Text(
-                      'START 2-PLAYER GAME',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 1.2),
-                     ),
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
                   ],
                 ),
               ),
-            ),
-            
-          ],
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildGameCard(BuildContext context, String title, String subtitle, IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: AppColors.primary.withOpacity(0.3)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: AppColors.primary, size: 32),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 12)),
-                ],
+  Widget _buildOnlineStats() {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.green.withOpacity(0.3)),
+          ),
+          child: const Row(
+            children: [
+              CircleAvatar(backgroundColor: Colors.green, radius: 4),
+              SizedBox(width: 8),
+              Text(
+                '1,402 Players Online',
+                style: TextStyle(color: Colors.green, fontSize: 11, fontWeight: FontWeight.bold),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white24, size: 16),
-          ],
+            ],
+          ),
         ),
-      ),
+      ],
+    );
+  }
+
+  void _showCreateRoom(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateRoomBottomSheet(),
+    );
+  }
+
+  void _showJoinRoom(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => const JoinRoomDialog(),
     );
   }
 }

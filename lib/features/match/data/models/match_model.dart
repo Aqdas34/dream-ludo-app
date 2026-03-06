@@ -3,6 +3,7 @@
 // Manual fromJson — safe for Spring Boot APIs (strings/nums mixed)
 // ───────────────────────────────────────────────────────────────
 
+import 'dart:convert';
 import 'package:equatable/equatable.dart';
 
 // Safe parsers shared across models
@@ -46,6 +47,10 @@ class MatchModel extends Equatable {
   final String? whatsappNo1;
   final String? whatsappNo2;
   final String? winnerName;
+  // History fields
+  final String? roomId;
+  final String? playersJson;
+  final int? gemsAwarded;
 
   const MatchModel({
     this.id,
@@ -69,12 +74,28 @@ class MatchModel extends Equatable {
     this.whatsappNo1,
     this.whatsappNo2,
     this.winnerName,
+    this.roomId,
+    this.playersJson,
+    this.gemsAwarded,
   });
 
   bool get hasJoined => isJoined == 1;
   bool get isOpen    => (tableJoined ?? 0) < (tableSize ?? 2);
   int  get spotsLeft => (tableSize ?? 2) - (tableJoined ?? 0);
 
+  List<String> get participantNames {
+    if (playersJson == null || playersJson!.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(playersJson!);
+      if (decoded is List) {
+        return decoded
+            .map((p) => (p as Map)['username']?.toString() ?? 'Unknown')
+            .toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+ 
   factory MatchModel.fromJson(Map<String, dynamic> json) {
     return MatchModel(
       id:           _str(json['id']),
@@ -88,7 +109,7 @@ class MatchModel extends Equatable {
       isJoined:     _toInt(json['is_joined']),
       win:          _toInt(json['win']),
       tableJoined:  _toInt(json['table_joined']),
-      resultStatus: _str(json['result_status']),
+      resultStatus: _str(json['result_status']) ?? _str(json['status']), // Fallback for history
       parti1Id:     _str(json['parti1_id']),
       parti2Id:     _str(json['parti2_id']),
       parti1Name:   _str(json['parti1_name']),
@@ -97,7 +118,10 @@ class MatchModel extends Equatable {
       parti2Status: _str(json['parti2_status']),
       whatsappNo1:  _str(json['whatsapp_no1']),
       whatsappNo2:  _str(json['whatsapp_no2']),
-      winnerName:   _str(json['winner_name']),
+      winnerName:   _str(json['winner_name']) ?? _str(json['winnerName']), // Fallback for history
+      roomId:       _str(json['roomId']),
+      playersJson:  _str(json['playersJson']),
+      gemsAwarded:  _toInt(json['gemsAwarded']),
     );
   }
 
@@ -123,6 +147,9 @@ class MatchModel extends Equatable {
     'whatsapp_no1':  whatsappNo1,
     'whatsapp_no2':  whatsappNo2,
     'winner_name':   winnerName,
+    'roomId':        roomId,
+    'playersJson':   playersJson,
+    'gemsAwarded':   gemsAwarded,
   };
 
   @override

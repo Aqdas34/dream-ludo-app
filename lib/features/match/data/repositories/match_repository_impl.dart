@@ -18,6 +18,15 @@ class MatchRepositoryImpl implements MatchRepository {
   }
 
   @override
+  Future<Either<Failure, List<MatchModel>>> getHistory(String userId) async {
+    try {
+      return Right(await _remote.getHistory(userId));
+    } catch (e) {
+      return _handleError(e);
+    }
+  }
+
+  @override
   Future<Either<Failure, List<MatchModel>>> getUpcoming(String userId) async {
     try {
       return Right(await _remote.getUpcoming(userId));

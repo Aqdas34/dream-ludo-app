@@ -58,6 +58,8 @@ class AuthRepositoryImpl implements AuthRepository {
           mobile:      user.mobile ?? '',
           whatsapp:    user.whatsappNo ?? '',
           password:    password,
+          gender:      user.gender,
+          gems:        user.gems,
         );
         return Right(user);
       } else {
@@ -86,6 +88,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
     required String fcmToken,
     required String deviceId,
+    required String gender,
     String? referCode,
   }) async {
     try {
@@ -99,6 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
         fcmToken: fcmToken,
         deviceId: deviceId,
         referCode: referCode,
+        gender: gender,
       );
       if (user.success == 1) {
         // Save token and profile to auto-login after register
@@ -115,6 +119,8 @@ class AuthRepositoryImpl implements AuthRepository {
           mobile: user.mobile ?? '',
           whatsapp: user.whatsappNo ?? '',
           password: password,
+          gender: gender,
+          gems: user.gems,
         );
         return Right(user);
       }
@@ -123,6 +129,54 @@ class AuthRepositoryImpl implements AuthRepository {
       return Left(NetworkFailure(e.message));
     } catch (e) {
       return Left(UnknownFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserModel>> getProfile(String userId) async {
+    try {
+      final user = await _remote.getProfile(userId);
+      // Update local storage with latest data
+      await _storage.saveUserProfile(
+        userId: user.id ?? userId,
+        fullName: user.fullName ?? '',
+        profilePhoto: user.profileImg ?? '',
+        username: user.username ?? '',
+        email: user.email ?? '',
+        countryCode: user.countryCode ?? '',
+        mobile: user.mobile ?? '',
+        whatsapp: user.whatsappNo ?? '',
+        password: '', // Password not returned by getProfile
+        gender: user.gender,
+        gems: user.gems,
+      );
+      return Right(user);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserModel>> updateProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      final user = await _remote.updateProfile(userId, data);
+      // Update local storage
+       await _storage.saveUserProfile(
+        userId: user.id ?? userId,
+        fullName: user.fullName ?? '',
+        profilePhoto: user.profileImg ?? '',
+        username: user.username ?? '',
+        email: user.email ?? '',
+        countryCode: user.countryCode ?? '',
+        mobile: user.mobile ?? '',
+        whatsapp: user.whatsappNo ?? '',
+        password: '',
+        gender: user.gender,
+        gems: user.gems,
+      );
+      return Right(user);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 

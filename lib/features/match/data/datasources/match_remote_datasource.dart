@@ -3,12 +3,14 @@
 // Fault-tolerant: handles both List and Map responses from API
 // ───────────────────────────────────────────────────────────────
 
+import 'package:dio/dio.dart';
 import 'package:dream_ludo/core/constants/api_constants.dart';
 import 'package:dream_ludo/core/constants/app_constants.dart';
 import 'package:dream_ludo/core/network/dio_client.dart';
 import 'package:dream_ludo/features/match/data/models/match_model.dart';
 
 abstract class MatchRemoteDataSource {
+  Future<List<MatchModel>> getHistory(String userId);
   Future<List<MatchModel>> getUpcoming(String userId);
   Future<List<MatchModel>> getOngoing(String userId);
   Future<List<MatchModel>> getCompleted(String userId);
@@ -77,6 +79,19 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   }
 
   @override
+  Future<List<MatchModel>> getHistory(String userId) async {
+    final response = await _client.get(
+      ApiConstants.getHistory,
+      queryParams: {
+        'purchase_key': AppConstants.purchaseKey,
+        'user_id': userId,
+      },
+      options: Options(headers: {'user-id': userId}),
+    );
+    return _parseList(response.data);
+  }
+
+  @override
   Future<List<MatchModel>> getUpcoming(String userId) async {
     final response = await _client.get(
       ApiConstants.getMatchUpcoming,
@@ -116,7 +131,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   Future<MatchModel> joinMatch(String matchId, String userId) async {
     final response = await _client.postForm(
       ApiConstants.postJoinMatch,
-      formData: {
+      data: {
         'purchase_key': AppConstants.purchaseKey,
         'match_id': matchId,
         'parti1': userId,
@@ -129,7 +144,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
   Future<MatchModel> leaveMatch(String matchId, String userId) async {
     final response = await _client.postForm(
       ApiConstants.deleteParticipant,
-      formData: {
+      data: {
         'purchase_key': AppConstants.purchaseKey,
         'match_id': matchId,
         'parti1': userId,
@@ -145,7 +160,7 @@ class MatchRemoteDataSourceImpl implements MatchRemoteDataSource {
     required String status,
     String? proofImage,
   }) async {
-    final response = await _client.postForm(
+    final response = await _client.postMultipart(
       ApiConstants.postResult,
       formData: {
         'purchase_key': AppConstants.purchaseKey,

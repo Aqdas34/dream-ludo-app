@@ -22,8 +22,13 @@ abstract class AuthRepository {
     required String password,
     required String fcmToken,
     required String deviceId,
+    required String gender,
     String? referCode,
   });
+
+  Future<Either<Failure, UserModel>> getProfile(String userId);
+
+  Future<Either<Failure, UserModel>> updateProfile(String userId, Map<String, dynamic> data);
 
   Future<Either<Failure, UserModel>> verifyRegister({
     required String deviceId,

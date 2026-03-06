@@ -69,7 +69,7 @@ class DioClient {
     }
   }
 
-  Future<Response> postForm(
+  Future<Response> postMultipart(
     String path, {
     required Map<String, dynamic> formData,
     Map<String, dynamic>? queryParams,
@@ -81,6 +81,25 @@ class DioClient {
         queryParameters: queryParams,
         options: Options(
           headers: {'Content-Type': 'multipart/form-data'},
+        ),
+      );
+    } on DioException catch (e) {
+      throw _handleDioError(e);
+    }
+  }
+
+  Future<Response> postForm(
+    String path, {
+    required Map<String, dynamic> data,
+    Map<String, dynamic>? queryParams,
+  }) async {
+    try {
+      return await _dio.post(
+        path,
+        data: data,
+        queryParameters: queryParams,
+        options: Options(
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
         ),
       );
     } on DioException catch (e) {

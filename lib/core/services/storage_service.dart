@@ -28,6 +28,8 @@ class StorageKeys {
   static const String isAutoLogin = 'KEY_IS_AUTO_LOGIN';
   static const String notificationEnabled = 'NOTIFICATION_ENABLED';
   static const String fcmToken = 'FCM_TOKEN';
+  static const String gender = 'KEY_GENDER';
+  static const String gems = 'KEY_GEMS';
 }
 
 class StorageService {
@@ -80,6 +82,8 @@ class StorageService {
     required String mobile,
     required String whatsapp,
     required String password,
+    String? gender,
+    int? gems,
   }) async {
     await saveUserId(userId);
     await _prefs.setString(StorageKeys.fullName, fullName);
@@ -89,6 +93,8 @@ class StorageService {
     await _prefs.setString(StorageKeys.countryCode, countryCode);
     await _prefs.setString(StorageKeys.mobile, mobile);
     await _prefs.setString(StorageKeys.whatsapp, whatsapp);
+    if (gender != null) await _prefs.setString(StorageKeys.gender, gender);
+    if (gems != null) await _prefs.setInt(StorageKeys.gems, gems);
     await _prefs.setString(StorageKeys.isAutoLogin, '1');
     await _secureStorage.write(key: StorageKeys.password, value: password);
   }

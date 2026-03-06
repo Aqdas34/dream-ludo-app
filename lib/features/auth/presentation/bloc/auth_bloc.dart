@@ -10,6 +10,8 @@ import 'package:dream_ludo/core/services/storage_service.dart';
 import 'package:dream_ludo/features/auth/data/models/user_model.dart';
 import 'package:dream_ludo/features/auth/domain/usecases/login_usecase.dart';
 import 'package:dream_ludo/features/auth/domain/usecases/register_usecase.dart';
+import 'package:dream_ludo/features/auth/domain/usecases/get_profile_usecase.dart';
+import 'package:dream_ludo/features/auth/domain/usecases/update_profile_usecase.dart';
 
 // ── Events ────────────────────────────────────────────────────
 
@@ -61,6 +63,17 @@ class SocialLoginRequested extends AuthEvent {
 
 class LogoutRequested extends AuthEvent {}
 
+class AuthCheckRequested extends AuthEvent {}
+
+class UpdateProfileRequested extends AuthEvent {
+  final Map<String, dynamic> profileData;
+  const UpdateProfileRequested(this.profileData);
+  @override
+  List<Object> get props => [profileData];
+}
+
+class RefreshProfileRequested extends AuthEvent {}
+
 // ── States ────────────────────────────────────────────────────
 
 abstract class AuthState extends Equatable {
@@ -110,20 +123,74 @@ class LogoutSuccess extends AuthState {}
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUseCase _loginUseCase;
   final RegisterUseCase _registerUseCase;
+  final GetProfileUseCase _getProfileUseCase;
+  final UpdateProfileUseCase _updateProfileUseCase;
   final StorageService _storage;
 
   AuthBloc({
     required LoginUseCase loginUseCase,
     required RegisterUseCase registerUseCase,
+    required GetProfileUseCase getProfileUseCase,
+    required UpdateProfileUseCase updateProfileUseCase,
     required StorageService storage,
   })  : _loginUseCase = loginUseCase,
         _registerUseCase = registerUseCase,
+        _getProfileUseCase = getProfileUseCase,
+        _updateProfileUseCase = updateProfileUseCase,
         _storage = storage,
         super(AuthInitial()) {
     on<LoginRequested>(_onLoginRequested);
     on<RegisterRequested>(_onRegisterRequested);
     on<SocialLoginRequested>(_onSocialLoginRequested);
     on<LogoutRequested>(_onLogoutRequested);
+    on<AuthCheckRequested>(_onAuthCheckRequested);
+    on<UpdateProfileRequested>(_onUpdateProfileRequested);
+    on<RefreshProfileRequested>(_onRefreshProfileRequested);
+  }
+
+  Future<void> _onAuthCheckRequested(
+    AuthCheckRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final userId = await _storage.getUserId();
+    if (userId != null && userId.isNotEmpty) {
+      final result = await _getProfileUseCase(userId);
+      result.fold(
+        (failure) => emit(AuthFailureState(failure.message)),
+        (user) => emit(AuthSuccess(user)),
+      );
+    } else {
+      emit(AuthInitial());
+    }
+  }
+
+  Future<void> _onUpdateProfileRequested(
+    UpdateProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AuthSuccess) {
+      emit(AuthLoading());
+      final result = await _updateProfileUseCase(currentState.user.id!, event.profileData);
+      result.fold(
+        (failure) => emit(AuthFailureState(failure.message)),
+        (user) => emit(AuthSuccess(user)),
+      );
+    }
+  }
+
+  Future<void> _onRefreshProfileRequested(
+    RefreshProfileRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is AuthSuccess) {
+      final result = await _getProfileUseCase(currentState.user.id!);
+      result.fold(
+        (_) => null, // Ignore failures on silent refresh
+        (user) => emit(AuthSuccess(user)),
+      );
+    }
   }
 
   Future<void> _onLoginRequested(

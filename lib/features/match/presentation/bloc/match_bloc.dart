@@ -7,6 +7,7 @@ import 'package:dream_ludo/core/services/storage_service.dart';
 import 'package:dream_ludo/core/services/socket_service.dart';
 import 'package:dream_ludo/features/match/data/models/match_model.dart';
 import 'package:dream_ludo/features/match/domain/usecases/get_matches_usecase.dart';
+import 'package:dream_ludo/features/online_game/data/models/online_game_model.dart';
 
 // ── Events ────────────────────────────────────────────────────
 
@@ -44,11 +45,18 @@ class MatchUpdatedFromWS extends MatchEvent {
   List<Object> get props => [updatedMatch];
 }
 
+class PublicRoomsReceived extends MatchEvent {
+  final List<OnlineLudoState> rooms;
+  const PublicRoomsReceived(this.rooms);
+  @override
+  List<Object> get props => [rooms];
+}
+
 // ── States ────────────────────────────────────────────────────
 
 abstract class MatchState extends Equatable {
   final MatchTab activeTab;
-  const MatchState({this.activeTab = MatchTab.upcoming});
+  const MatchState({this.activeTab = MatchTab.history});
   @override
   List<Object?> get props => [activeTab];
 }
@@ -60,7 +68,7 @@ class MatchLoading extends MatchState {
 }
 
 class MatchLoaded extends MatchState {
-  final List<MatchModel> matches;
+  final List<dynamic> matches; // Can be List<MatchModel> or List<OnlineLudoState>
   const MatchLoaded(this.matches, {super.activeTab});
   @override
   List<Object> get props => [matches, activeTab];
@@ -80,7 +88,7 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
   final StorageService _storage;
   final SocketService _socketService;
 
-  MatchTab _currentTab = MatchTab.upcoming;
+  MatchTab _currentTab = MatchTab.history;
 
   MatchBloc({
     required GetMatchesUseCase getMatchesUseCase,
@@ -94,6 +102,13 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
     on<RefreshMatches>(_onLoadMatches);
     on<TabChanged>(_onTabChanged);
     on<MatchUpdatedFromWS>(_onMatchUpdatedFromWS);
+    on<PublicRoomsReceived>((event, emit) {
+      if (_currentTab == MatchTab.public) {
+        emit(MatchLoaded(event.rooms, activeTab: MatchTab.public));
+      }
+    });
+
+    _setupPublicRoomsListener();
   }
 
   Future<void> _onLoadMatches(MatchEvent event, Emitter<MatchState> emit) async {
@@ -104,8 +119,12 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
       emit(MatchLoading(activeTab: tab));
     }
 
-    final userId = await _storage.getUserId() ?? '';
+    if (tab == MatchTab.public) {
+      _socketService.emit('getPublicRooms', {});
+      return; 
+    }
 
+    final userId = await _storage.getUserId() ?? '';
     final result = await _getMatchesUseCase(userId: userId, tab: tab);
 
     result.fold(
@@ -143,6 +162,18 @@ class MatchBloc extends Bloc<MatchEvent, MatchState> {
       });
     }).catchError((e) {
       print('❌ MatchBloc: Socket connection failed: $e');
+    });
+  }
+
+  void _setupPublicRoomsListener() {
+    _socketService.connect().then((_) {
+      _socketService.on('publicRoomsList', (data) {
+        try {
+          final listData = data as List;
+          final rooms = listData.map((json) => OnlineLudoState.fromJson(json as Map<String, dynamic>)).toList();
+          add(PublicRoomsReceived(rooms));
+        } catch (_) {}
+      });
     });
   }
 }

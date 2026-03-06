@@ -24,7 +24,12 @@ import 'package:dream_ludo/features/update/presentation/pages/update_app_page.da
 import 'package:dream_ludo/features/webview/presentation/pages/webview_page.dart';
 import 'package:dream_ludo/features/referral/presentation/pages/referral_page.dart';
 import 'package:dream_ludo/features/game/presentation/pages/game_page.dart';
+import 'package:dream_ludo/features/online_game/presentation/pages/online_game_page.dart';
+import 'package:dream_ludo/features/rooms/presentation/pages/public_lobby_page.dart';
 import 'package:dream_ludo/features/rewards/presentation/pages/rewards_page.dart';
+import 'package:dream_ludo/features/rewards/presentation/pages/gem_store_page.dart';
+import 'package:dream_ludo/features/rewards/presentation/pages/achievements_page.dart';
+import 'package:dream_ludo/features/rewards/presentation/pages/daily_reward_page.dart';
 
 class AppRoutes {
   AppRoutes._();
@@ -50,6 +55,10 @@ class AppRoutes {
   static const String game = '/game/:roomId';
   static const String createRoom = '/game/create';
   static const String joinRoom = '/game/join';
+  static const String publicLobby = '/game/public';
+  static const String store = '/store';
+  static const String achievements = '/achievements';
+  static const String dailyReward = '/daily-reward';
 }
 
 class AppRouter {
@@ -188,9 +197,19 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.game,
             builder: (_, state) {
-              final roomId = state.pathParameters['roomId']!;
+              final roomId = state.pathParameters['roomId'] ?? 'quick';
               final isJoining = state.uri.queryParameters['join'] == 'true';
-              return GamePage(roomId: roomId, isJoining: isJoining);
+              final isPrivate = state.uri.queryParameters['privacy'] != 'false'; // default to true
+              
+              if (roomId == 'quick') {
+                 return const GamePage(roomId: 'quick');
+              }
+              
+              return OnlineGamePage(
+                roomId: roomId, 
+                isJoining: isJoining,
+                isPrivate: isPrivate,
+              );
             },
           ),
           GoRoute(
@@ -200,6 +219,22 @@ class AppRouter {
           GoRoute(
             path: AppRoutes.joinRoom,
             builder: (_, __) => _JoinRoomPrompt(), 
+          ),
+          GoRoute(
+            path: AppRoutes.publicLobby,
+            builder: (_, __) => const PublicLobbyPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.store,
+            builder: (_, __) => const GemStorePage(),
+          ),
+          GoRoute(
+            path: AppRoutes.achievements,
+            builder: (_, __) => const AchievementsPage(),
+          ),
+          GoRoute(
+            path: AppRoutes.dailyReward,
+            builder: (_, __) => const DailyRewardPage(),
           ),
         ],
         errorBuilder: (context, state) => Scaffold(

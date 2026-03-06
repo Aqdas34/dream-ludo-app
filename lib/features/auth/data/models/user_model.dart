@@ -42,6 +42,8 @@ class UserModel extends Equatable {
   final String? msg;
   final int? success;
   final String? token;
+  final int? gems;
+  final String? gender;
 
   const UserModel({
     this.id,
@@ -61,6 +63,8 @@ class UserModel extends Equatable {
     this.msg,
     this.success,
     this.token,
+    this.gems,
+    this.gender,
   });
 
   double get totalBalance =>
@@ -88,6 +92,8 @@ class UserModel extends Equatable {
       msg:         _str(json['msg']),
       success:     _toInt(json['success']),
       token:       _str(json['token']),
+      gems:        _toInt(json['gems']),
+      gender:      _str(json['gender']),
     );
   }
 
@@ -109,6 +115,8 @@ class UserModel extends Equatable {
     'msg':         msg,
     'success':     success,
     'token':       token,
+    'gems':        gems,
+    'gender':      gender,
   };
 
   @override

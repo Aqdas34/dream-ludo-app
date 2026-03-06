@@ -11,15 +11,18 @@ import 'package:dream_ludo/core/di/service_locator.dart';
 import 'package:dream_ludo/core/router/app_router.dart';
 import 'package:dream_ludo/core/theme/app_theme.dart';
 import 'package:dream_ludo/features/splash/presentation/bloc/splash_bloc.dart';
+import 'package:dream_ludo/features/auth/presentation/bloc/auth_bloc.dart';
 
 class SplashPage extends StatelessWidget {
   const SplashPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => sl<SplashBloc>()..add(SplashInitialized()),
-      child: BlocListener<SplashBloc, SplashState>(
+    // Initializing the bloc at the start of the splash screen
+    context.read<AuthBloc>().add(AuthCheckRequested());
+    context.read<SplashBloc>().add(SplashInitialized());
+
+    return BlocListener<SplashBloc, SplashState>(
         listener: (context, state) {
           if (state is SplashNavigateToLogin) {
             context.go(AppRoutes.login);
@@ -29,8 +32,7 @@ class SplashPage extends StatelessWidget {
             context.go(AppRoutes.updateApp);
           }
         },
-        child: const _SplashView(),
-      ),
+      child: const _SplashView(),
     );
   }
 }

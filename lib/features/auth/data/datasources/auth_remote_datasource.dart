@@ -24,8 +24,13 @@ abstract class AuthRemoteDataSource {
     required String password,
     required String fcmToken,
     required String deviceId,
+    required String gender,
     String? referCode,
   });
+
+  Future<UserModel> getProfile(String userId);
+
+  Future<UserModel> updateProfile(String userId, Map<String, dynamic> data);
 
   Future<UserModel> verifyRegister({
     required String deviceId,
@@ -54,6 +59,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   AuthRemoteDataSourceImpl(this._client);
 
+  void _checkSuccess(dynamic responseData) {
+    if (responseData is Map) {
+      final success = _safeInt(responseData['success']);
+      final msg = responseData['msg']?.toString();
+      if (success == 0) {
+        throw Exception(msg ?? 'Operation failed');
+      }
+    }
+  }
+
+  int? _safeInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is String) return int.tryParse(v);
+    return null;
+  }
+
   @override
   Future<UserModel> login({
     required String email,
@@ -69,9 +91,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'type': type,
       },
     );
+
+    _checkSuccess(response.data);
+
     final data = UserResponse.fromJson(response.data);
     final result = data.result?.first;
-    if (result == null) throw Exception('Empty response');
+    if (result == null) throw Exception('User data not found in response');
     return result;
   }
 
@@ -85,9 +110,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
     required String fcmToken,
     required String deviceId,
+    required String gender,
     String? referCode,
   }) async {
-    final Map<String, dynamic> formData = {
+    final Map<String, dynamic> bodyData = {
       'purchase_key': AppConstants.purchaseKey,
       'full_name': fullName,
       'username': username,
@@ -97,16 +123,49 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       'password': password,
       'fcm_token': fcmToken,
       'device_id': deviceId,
+      'gender': gender,
       if (referCode != null && referCode.isNotEmpty) 'referer': referCode,
     };
     final response = await _client.postForm(
       ApiConstants.postUserRegister,
-      formData: formData,
+      data: bodyData,
     );
+
+    _checkSuccess(response.data);
+
     final data = UserResponse.fromJson(response.data);
     final result = data.result?.first;
-    if (result == null) throw Exception('Empty response');
+    if (result == null) throw Exception('User data not found in response');
     return result;
+  }
+
+  @override
+  Future<UserModel> getProfile(String userId) async {
+    final response = await _client.get(
+      ApiConstants.getProfile,
+      queryParams: {
+        'purchase_key': AppConstants.purchaseKey,
+        'userId': userId,
+      },
+    );
+    _checkSuccess(response.data);
+    final data = UserResponse.fromJson(response.data);
+    return data.result!.first;
+  }
+
+  @override
+  Future<UserModel> updateProfile(String userId, Map<String, dynamic> data) async {
+    final response = await _client.postForm(
+      ApiConstants.updateProfile,
+      data: {
+        'purchase_key': AppConstants.purchaseKey,
+        'userId': userId,
+        ...data,
+      },
+    );
+    _checkSuccess(response.data);
+    final resData = UserResponse.fromJson(response.data);
+    return resData.result!.first;
   }
 
   @override
@@ -126,6 +185,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'username': username,
       },
     );
+    _checkSuccess(response.data);
     final data = UserResponse.fromJson(response.data);
     return data.result!.first;
   }
@@ -139,6 +199,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'mobile': mobile,
       },
     );
+    _checkSuccess(response.data);
     final data = UserResponse.fromJson(response.data);
     return data.result!.first;
   }
@@ -152,6 +213,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'refer': referCode,
       },
     );
+    _checkSuccess(response.data);
     final data = UserResponse.fromJson(response.data);
     return data.result!.first;
   }
@@ -163,12 +225,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     final response = await _client.postForm(
       ApiConstants.resetPassword,
-      formData: {
+      data: {
         'purchase_key': AppConstants.purchaseKey,
         'mobile': mobile,
         'password': password,
       },
     );
+    _checkSuccess(response.data);
     final data = UserResponse.fromJson(response.data);
     return data.result!.first;
   }
@@ -180,12 +243,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }) async {
     final response = await _client.postForm(
       ApiConstants.updateUserProfile,
-      formData: {
+      data: {
         'purchase_key': AppConstants.purchaseKey,
         'id': userId,
         'fcm_token': fcmToken,
       },
     );
+    _checkSuccess(response.data);
     final data = UserResponse.fromJson(response.data);
     return data.result!.first;
   }
